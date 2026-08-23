@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../providers/schedule_provider.dart';
@@ -18,7 +18,7 @@ class _NextUpBannerState extends State<NextUpBanner> with SingleTickerProviderSt
     super.initState();
     _pulseController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 2),
+      duration: const Duration(milliseconds: 1800),
     )..repeat(reverse: true);
   }
 
@@ -40,34 +40,45 @@ class _NextUpBannerState extends State<NextUpBanner> with SingleTickerProviderSt
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
             colors: [
-              colors.terracotta.withOpacity(0.18),
-              colors.gold.withOpacity(0.12),
+              colors.terracotta.withValues(alpha: 0.15),
+              colors.gold.withValues(alpha: 0.08),
             ],
           ),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: colors.terracotta.withOpacity(0.35)),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: (info != null ? colors.terracotta : colors.sage).withValues(alpha: 0.35),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.12),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
         ),
         child: Row(
           children: [
-            // Pulsing dot
+            // Pulsing live radar dot
             AnimatedBuilder(
               animation: _pulseController,
               builder: (context, child) {
-                final scale = 1.0 + (_pulseController.value * 0.3);
-                final glowOpacity = 0.25 + (_pulseController.value * 0.2);
+                final scale = 1.0 + (_pulseController.value * 0.35);
+                final glowOpacity = 0.25 + (_pulseController.value * 0.4);
 
                 return Container(
-                  width: 9,
-                  height: 9,
+                  width: 10,
+                  height: 10,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: info != null ? colors.terracotta : colors.sage,
                     boxShadow: [
                       BoxShadow(
-                        color: (info != null ? colors.terracotta : colors.sage).withOpacity(glowOpacity),
-                        blurRadius: 6 * scale,
-                        spreadRadius: 2 * scale,
+                        color: (info != null ? colors.terracotta : colors.sage).withValues(alpha: glowOpacity),
+                        blurRadius: 8 * scale,
+                        spreadRadius: 2.5 * scale,
                       )
                     ],
                   ),
@@ -81,27 +92,35 @@ class _NextUpBannerState extends State<NextUpBanner> with SingleTickerProviderSt
               child: info != null
                   ? RichText(
                       text: TextSpan(
-                        style: GoogleFonts.workSans(
-                          fontSize: 13,
+                        style: GoogleFonts.outfit(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w400,
                           color: colors.cream,
                         ),
                         children: [
-                          const TextSpan(text: 'Next up '),
+                          const TextSpan(text: 'Next up: '),
                           TextSpan(
                             text: info.slot.label,
-                            style: GoogleFonts.workSans(
+                            style: GoogleFonts.outfit(
                               fontWeight: FontWeight.w700,
                               color: colors.goldSoft,
                             ),
                           ),
-                          TextSpan(text: ' at ${info.timeLabel} (${info.diffText})'),
+                          TextSpan(
+                            text: ' at ${info.timeLabel} • ${info.diffText}',
+                            style: GoogleFonts.outfit(
+                              fontWeight: FontWeight.w500,
+                              color: colors.cream.withValues(alpha: 0.8),
+                            ),
+                          ),
                         ],
                       ),
                     )
                   : Text(
-                      'Nothing else timed for today â€” enjoy the rest of it.',
-                      style: GoogleFonts.workSans(
-                        fontSize: 13,
+                      'All daily routines wrapped up — enjoy your peaceful flow.',
+                      style: GoogleFonts.outfit(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w500,
                         color: colors.creamDim,
                       ),
                     ),

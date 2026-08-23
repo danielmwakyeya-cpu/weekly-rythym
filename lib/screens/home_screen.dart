@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -36,12 +37,12 @@ class _HomeScreenState extends State<HomeScreen> {
       const SettingsScreen(),
     ];
 
-    // Determine slide direction based on old vs new tab
     final slideFromRight = currentTab >= _previousTab;
 
     return Scaffold(
       backgroundColor: colors.bg,
       body: SafeArea(
+        bottom: false,
         child: Stack(
           children: [
             Column(
@@ -49,13 +50,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 const TopHeaderBar(),
                 Expanded(
                   child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 300),
+                    duration: const Duration(milliseconds: 320),
                     switchInCurve: Curves.easeOutCubic,
                     switchOutCurve: Curves.easeInCubic,
                     transitionBuilder: (child, animation) {
                       final offsetIn = slideFromRight
-                          ? Tween<Offset>(begin: const Offset(0.15, 0), end: Offset.zero)
-                          : Tween<Offset>(begin: const Offset(-0.15, 0), end: Offset.zero);
+                          ? Tween<Offset>(begin: const Offset(0.12, 0), end: Offset.zero)
+                          : Tween<Offset>(begin: const Offset(-0.12, 0), end: Offset.zero);
 
                       return SlideTransition(
                         position: offsetIn.animate(animation),
@@ -71,7 +72,90 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                 ),
+                // Padding for floating dock
+                const SizedBox(height: 80),
               ],
+            ),
+
+            // Floating Frosted Glass Bottom Navigation Bar
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: 18,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(26),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: colors.plum.withValues(alpha: 0.85),
+                      borderRadius: BorderRadius.circular(26),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.12),
+                        width: 1.2,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.35),
+                          blurRadius: 20,
+                          offset: const Offset(0, 8),
+                        ),
+                        BoxShadow(
+                          color: colors.terracotta.withValues(alpha: 0.1),
+                          blurRadius: 12,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        _DockNavItem(
+                          icon: Icons.calendar_today_outlined,
+                          activeIcon: Icons.calendar_today_rounded,
+                          label: 'Today',
+                          isSelected: currentTab == 0,
+                          colors: colors,
+                          onTap: () => _switchTab(provider, currentTab, 0),
+                        ),
+                        _DockNavItem(
+                          icon: Icons.view_week_outlined,
+                          activeIcon: Icons.view_week_rounded,
+                          label: 'Week',
+                          isSelected: currentTab == 1,
+                          colors: colors,
+                          onTap: () => _switchTab(provider, currentTab, 1),
+                        ),
+                        _DockNavItem(
+                          icon: Icons.sticky_note_2_outlined,
+                          activeIcon: Icons.sticky_note_2_rounded,
+                          label: 'Keep',
+                          isSelected: currentTab == 2,
+                          colors: colors,
+                          onTap: () => _switchTab(provider, currentTab, 2),
+                        ),
+                        _DockNavItem(
+                          icon: Icons.auto_awesome_outlined,
+                          activeIcon: Icons.auto_awesome_rounded,
+                          label: 'Insights',
+                          isSelected: currentTab == 3,
+                          colors: colors,
+                          onTap: () => _switchTab(provider, currentTab, 3),
+                        ),
+                        _DockNavItem(
+                          icon: Icons.palette_outlined,
+                          activeIcon: Icons.palette_rounded,
+                          label: 'Settings',
+                          isSelected: currentTab == 4,
+                          colors: colors,
+                          onTap: () => _switchTab(provider, currentTab, 4),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             ),
 
             // Celebration Confetti Overlay
@@ -82,67 +166,86 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: Container(
+    );
+  }
+
+  void _switchTab(ScheduleProvider provider, int currentTab, int targetTab) {
+    if (currentTab == targetTab) return;
+    HapticService.selectionClick();
+    setState(() {
+      _previousTab = currentTab;
+    });
+    provider.setSelectedTab(targetTab);
+  }
+}
+
+class _DockNavItem extends StatelessWidget {
+  final IconData icon;
+  final IconData activeIcon;
+  final String label;
+  final bool isSelected;
+  final dynamic colors;
+  final VoidCallback onTap;
+
+  const _DockNavItem({
+    required this.icon,
+    required this.activeIcon,
+    required this.label,
+    required this.isSelected,
+    required this.colors,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 240),
+        curve: Curves.easeOutCubic,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: colors.plum,
-          border: Border(top: BorderSide(color: colors.gold.withOpacity(0.15))),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.3),
-              blurRadius: 12,
-              offset: const Offset(0, -3),
-            ),
-          ],
+          color: isSelected
+              ? colors.terracotta.withValues(alpha: 0.22)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected
+                ? colors.terracotta.withValues(alpha: 0.5)
+                : Colors.transparent,
+          ),
         ),
-        child: BottomNavigationBar(
-          currentIndex: currentTab,
-          onTap: (idx) {
-            HapticService.selectionClick();
-            _previousTab = currentTab;
-            provider.setSelectedTab(idx);
-          },
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          type: BottomNavigationBarType.fixed,
-          selectedItemColor: colors.terracotta,
-          unselectedItemColor: colors.muted,
-          selectedLabelStyle: GoogleFonts.workSans(fontSize: 10.5, fontWeight: FontWeight.w700),
-          unselectedLabelStyle: GoogleFonts.workSans(fontSize: 10.5),
-          items: [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.calendar_today_outlined, size: 20,
-                semanticLabel: 'Today tab'),
-              activeIcon: Icon(Icons.calendar_today, size: 20),
-              label: 'Today',
-              tooltip: 'View today\'s schedule',
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AnimatedScale(
+              scale: isSelected ? 1.15 : 1.0,
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOutBack,
+              child: Icon(
+                isSelected ? activeIcon : icon,
+                size: 20,
+                color: isSelected ? colors.goldSoft : colors.muted,
+                shadows: isSelected
+                    ? [
+                        Shadow(
+                          color: colors.gold.withValues(alpha: 0.5),
+                          blurRadius: 10,
+                        ),
+                      ]
+                    : null,
+              ),
             ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.view_week_outlined, size: 20,
-                semanticLabel: 'Week tab'),
-              activeIcon: Icon(Icons.view_week, size: 20),
-              label: 'Week',
-              tooltip: 'View weekly overview',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.sticky_note_2_outlined, size: 20,
-                semanticLabel: 'Keep notes tab'),
-              activeIcon: Icon(Icons.sticky_note_2, size: 20),
-              label: 'Keep',
-              tooltip: 'Notes and checklists',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.auto_awesome_outlined, size: 20,
-                semanticLabel: 'Insights tab'),
-              activeIcon: Icon(Icons.auto_awesome, size: 20),
-              label: 'Insights',
-              tooltip: 'View rhythm insights',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.palette_outlined, size: 20,
-                semanticLabel: 'Settings tab'),
-              activeIcon: Icon(Icons.palette, size: 20),
-              label: 'Settings',
-              tooltip: 'App settings and themes',
+            const SizedBox(height: 3),
+            Text(
+              label,
+              style: GoogleFonts.outfit(
+                fontSize: 10.5,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                color: isSelected ? colors.cream : colors.muted.withValues(alpha: 0.8),
+                letterSpacing: 0.2,
+              ),
             ),
           ],
         ),
