@@ -5,8 +5,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
-import 'package:file_picker/file_picker.dart';
 import '../models/smart_reminder_model.dart';
 import '../providers/schedule_provider.dart';
 import '../services/notification_service.dart';
@@ -452,16 +450,17 @@ class SettingsScreen extends StatelessWidget {
                     HapticService.lightTap();
                     try {
                       final json = provider.exportJson();
-                      final dir = await getTemporaryDirectory();
+                      await Clipboard.setData(ClipboardData(text: json));
+                      final dir = await getApplicationDocumentsDirectory();
                       final file = File('${dir.path}/weekly_rhythm_backup.json');
                       await file.writeAsString(json);
-                      await Share.shareXFiles(
-                        [XFile(file.path)],
-                        subject: 'Weekly Rhythm Backup',
-                      );
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Backup copied to clipboard & saved to Documents!')),
+                        );
+                      }
                     } catch (e) {
                       if (context.mounted) {
-                        // Fallback to clipboard
                         Clipboard.setData(ClipboardData(text: provider.exportJson()));
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text('Backup copied to clipboard!')),
@@ -484,28 +483,63 @@ class SettingsScreen extends StatelessWidget {
                 child: OutlinedButton.icon(
                   onPressed: () async {
                     HapticService.lightTap();
-                    try {
-                      final result = await FilePickerPlatform.instance.pickFiles(
-                        type: FileType.custom,
-                        allowedExtensions: ['json'],
-                      );
-                      if (result != null && result.isNotEmpty && result.first.path != null) {
-                        final file = File(result.first.path!);
-                        final jsonStr = await file.readAsString();
-                        final success = await provider.importJson(jsonStr);
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(success ? 'Data imported successfully!' : 'Invalid backup file.')),
-                          );
-                        }
-                      }
-                    } catch (e) {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Failed to import backup.')),
-                        );
-                      }
+                    final importCtrl = TextEditingController();
+                    final clipData = await Clipboard.getData(Clipboard.kTextPlain);
+                    if (clipData?.text != null && clipData!.text!.contains('"appTitle"')) {
+                      importCtrl.text = clipData.text!;
                     }
+                    if (!context.mounted) return;
+                    showDialog(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        backgroundColor: colors.plum,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                        title: Text('Import Backup JSON', style: GoogleFonts.outfit(color: colors.cream, fontWeight: FontWeight.w700, fontSize: 18)),
+                        content: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Paste your backup JSON below to restore:', style: GoogleFonts.outfit(color: colors.muted, fontSize: 13)),
+                            const SizedBox(height: 10),
+                            TextField(
+                              controller: importCtrl,
+                              maxLines: 5,
+                              style: GoogleFonts.outfit(color: colors.cream, fontSize: 12),
+                              decoration: InputDecoration(
+                                hintText: '{"appTitle": "...", "days": {...}}',
+                                hintStyle: GoogleFonts.outfit(color: colors.muted.withValues(alpha: 0.5)),
+                                filled: true,
+                                fillColor: Colors.black.withValues(alpha: 0.25),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
+                            ),
+                          ],
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx),
+                            child: Text('Cancel', style: GoogleFonts.outfit(color: colors.muted)),
+                          ),
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: colors.terracotta,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                            onPressed: () async {
+                              final success = await provider.importJson(importCtrl.text.trim());
+                              if (context.mounted) {
+                                Navigator.pop(ctx);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text(success ? 'Data imported successfully!' : 'Invalid backup JSON content.')),
+                                );
+                              }
+                            },
+                            child: const Text('Restore', style: TextStyle(fontWeight: FontWeight.w700)),
+                          ),
+                        ],
+                      ),
+                    );
                   },
                   icon: const Icon(Icons.file_download_outlined, size: 16),
                   label: const Text('Import'),
