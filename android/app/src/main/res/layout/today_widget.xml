@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_background"
+    android:padding="16dp">
+
+    <TextView
+        android:id="@+id/widget_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Weekly Rhythm"
+        android:textColor="#F4EDE2"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/widget_progress"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:text="0 / 0 done"
+        android:textColor="#D4A574"
+        android:textSize="12sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/widget_day"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/widget_title"
+        android:layout_marginTop="2dp"
+        android:text="Today"
+        android:textColor="#E8A4BD"
+        android:textSize="13sp" />
+
+    <TextView
+        android:id="@+id/widget_tasks"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/widget_day"
+        android:layout_marginTop="8dp"
+        android:text="Loading tasks..."
+        android:textColor="#A8B5A2"
+        android:textSize="12sp"
+        android:lineSpacingExtra="4dp" />
+
+</RelativeLayout>
