@@ -1,0 +1,9 @@
+-keep public class androidx.work.** { *; }
+-keep public class androidx.startup.** { *; }
+-keep public class androidx.room.** { *; }
+-keep class * extends androidx.room.RoomDatabase { *; }
+-keep class androidx.work.impl.WorkDatabase_Impl { *; }
+-keep class * implements androidx.startup.Initializer { *; }
+-dontwarn androidx.work.**
+-dontwarn androidx.startup.**
+-dontwarn androidx.room.**
